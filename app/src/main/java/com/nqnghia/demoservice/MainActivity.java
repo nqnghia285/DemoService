@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         setContentView(R.layout.activity_main);
 
         boolean result = bindService(
-            new Intent(this, LocalService.class),
+            new Intent(MainActivity.this, LocalService.class),
             this,
             Context.BIND_AUTO_CREATE
         );
@@ -41,15 +41,6 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
         if (iBinder instanceof LocalService.LocalBinder) {
             mLocalBinder = (LocalService.LocalBinder)iBinder;
-//            aTimer = new Timer();
-//            aTimer.schedule(new TimerTask() {
-//                @Override
-//                public void run() {
-//                    if (mLocalBinder != null) {
-//                       mLocalBinder.send(TOPIC1, "Ahihi");
-//                    }
-//                }
-//            }, 3000, 3000);
         }
     }
 
@@ -78,9 +69,8 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
                 }
             }, 2000);
         } else {
-//            aTimer.purge();
-//            aTimer.cancel();
-            mLocalBinder.getService().onDestroy();
+            mLocalBinder.stopService();
+
             Intent homeIntent = new Intent(Intent.ACTION_MAIN);
             homeIntent.addCategory(Intent.CATEGORY_HOME);
             homeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP |

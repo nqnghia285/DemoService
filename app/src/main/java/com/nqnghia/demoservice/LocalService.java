@@ -14,6 +14,8 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class LocalService extends Service {
     private static final String TAG = "LocalService";
@@ -35,6 +37,8 @@ public class LocalService extends Service {
     private final LocalBinder mLocalBinder = new LocalBinder();
 
     private static final Timer mTimer = new Timer();
+
+    private ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     @Nullable
     @Override
@@ -97,6 +101,7 @@ public class LocalService extends Service {
 
         public void stopService() {
             LocalService.this.stopSelf();
+            onDestroy();
         }
     }
 
@@ -104,11 +109,10 @@ public class LocalService extends Service {
     public void onCreate() {
         StartedFlag = false;
         mqttHelper = new MqttHelper(LocalService.this, SERVER, PORT, USER, PASSWORD);
-        new Thread(new Runnable() {
+
+        executorService.execute(new Runnable() {
             @Override
             public void run() {
-                //Looper.prepare();
-
                 if (mqttHelper != null) {
                     mqttHelper.connect();
 
@@ -133,16 +137,21 @@ public class LocalService extends Service {
                     Log.d("XXX", "Connected");
                 }
             }
-        }).start();
+        });
     }
 
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy: called");
-        mTimer.purge();
-        mTimer.cancel();
-        mqttHelper.destroy();
-        LocalService.this.stopSelf();
+        if (mTimer != null) {
+            mTimer.purge();
+            mTimer.cancel();
+        }
+
+        if (mqttHelper != null) {
+            mqttHelper.destroy();
+            mqttHelper = null;
+        }
         super.onDestroy();
     }
 }

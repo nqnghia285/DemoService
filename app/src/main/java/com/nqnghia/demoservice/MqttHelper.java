@@ -171,7 +171,9 @@ public class MqttHelper extends AppCompatActivity {
     public void destroy() {
         try {
             _Client.unsubscribe(topics.toArray(new String[topics.size()]));
+            _Client.setCallback(null);
             _Client.close();
+            _Client = null;
         } catch (MqttException e) {
             e.printStackTrace();
         }
