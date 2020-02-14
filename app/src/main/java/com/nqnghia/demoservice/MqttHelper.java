@@ -15,6 +15,10 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
 public class MqttHelper extends AppCompatActivity {
     private static final String TAG = "MqttHelper";
     private int _Port;
@@ -22,6 +26,8 @@ public class MqttHelper extends AppCompatActivity {
     private String _User;
     private String _Password;
     private MqttAndroidClient _Client;
+
+    private static LinkedList<String> topics = new LinkedList<>();
 
     private MqttHandler mqttHandler;
     private MqttSubscribe mqttSubscribe;
@@ -129,6 +135,16 @@ public class MqttHelper extends AppCompatActivity {
         }
     }
 
+    public void addTopic(String topic) {
+        topics.add(topic);
+    }
+
+    public void addTopic(String[] aTopics) {
+        for (String topic : aTopics) {
+            topics.add(topic);
+        }
+    }
+
     public void disconnect() {
         if (_Client != null) {
             try {
@@ -154,18 +170,7 @@ public class MqttHelper extends AppCompatActivity {
 
     public void destroy() {
         try {
-            _Client.disconnect(null, new IMqttActionListener() {
-                @Override
-                public void onSuccess(IMqttToken asyncActionToken) {
-                    _Connected = false;
-                    Log.d(TAG, "Disconnect is success.");
-                }
-
-                @Override
-                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                    Log.e(TAG, "Disconnect is failure.");
-                }
-            });
+            _Client.unsubscribe(topics.toArray(new String[topics.size()]));
             _Client.close();
         } catch (MqttException e) {
             e.printStackTrace();

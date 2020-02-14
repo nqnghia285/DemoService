@@ -41,15 +41,15 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
         if (iBinder instanceof LocalService.LocalBinder) {
             mLocalBinder = (LocalService.LocalBinder)iBinder;
-            aTimer = new Timer();
-            aTimer.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    if (mLocalBinder != null) {
-                       mLocalBinder.send(TOPIC1, "Ahihi");
-                    }
-                }
-            }, 3000, 3000);
+//            aTimer = new Timer();
+//            aTimer.schedule(new TimerTask() {
+//                @Override
+//                public void run() {
+//                    if (mLocalBinder != null) {
+//                       mLocalBinder.send(TOPIC1, "Ahihi");
+//                    }
+//                }
+//            }, 3000, 3000);
         }
     }
 
@@ -78,12 +78,14 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
                 }
             }, 2000);
         } else {
-            aTimer.purge();
-            aTimer.cancel();
-            stopService(new Intent(this, LocalService.class));
+//            aTimer.purge();
+//            aTimer.cancel();
+            mLocalBinder.getService().onDestroy();
             Intent homeIntent = new Intent(Intent.ACTION_MAIN);
             homeIntent.addCategory(Intent.CATEGORY_HOME);
-            homeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            homeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP |
+                    Intent.FLAG_ACTIVITY_NEW_TASK |
+                    Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(homeIntent);
         }
     }

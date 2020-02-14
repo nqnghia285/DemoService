@@ -12,7 +12,11 @@ import androidx.annotation.Nullable;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 public class LocalService extends Service {
+    private static final String TAG = "LocalService";
     // Parameter CloudMQTT
     private static final String TOPIC1 = "Application_Channel";
     private static final String TOPIC2 = "Lights_Channel";
@@ -28,7 +32,32 @@ public class LocalService extends Service {
 
     private volatile static Boolean StartedFlag;
 
+    private final LocalBinder mLocalBinder = new LocalBinder();
+
+    private static final Timer mTimer = new Timer();
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return mLocalBinder;
+    }
+
     public class LocalBinder extends Binder {
+
+        public LocalBinder() {
+            mTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    if (mLocalBinder != null) {
+                        mLocalBinder.send(TOPIC1, "Ahihi");
+                    }
+                }
+            }, 3000, 3000);
+        }
+
+        public LocalService getService() {
+            return LocalService.this;
+        }
 
         public void send(String topic, String message) {
             if (mqttHelper != null) {
@@ -65,6 +94,10 @@ public class LocalService extends Service {
         public boolean isConnected() {
             return mqttHelper.isConnected();
         }
+
+        public void stopService() {
+            LocalService.this.stopSelf();
+        }
     }
 
     @Override
@@ -94,6 +127,7 @@ public class LocalService extends Service {
                         @Override
                         public void setSubscribe(IMqttToken asyncActionToken) {
                             mqttHelper.subscribe(TOPIC1, QoS0);
+                            mqttHelper.addTopic(TOPIC1);
                         }
                     });
                     Log.d("XXX", "Connected");
@@ -104,14 +138,11 @@ public class LocalService extends Service {
 
     @Override
     public void onDestroy() {
-
-    }
-
-    private final LocalBinder mBinder = new LocalBinder();
-
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return mBinder;
+        Log.d(TAG, "onDestroy: called");
+        mTimer.purge();
+        mTimer.cancel();
+        mqttHelper.destroy();
+        LocalService.this.stopSelf();
+        super.onDestroy();
     }
 }
